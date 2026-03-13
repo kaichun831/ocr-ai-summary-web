@@ -1,0 +1,54 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Next.js dev server",
+			"type": "shell",
+			"command": "/Users/kg/.nvm/versions/node/v22.14.0/bin/node",
+			"args": [
+				"${workspaceFolder}/node_modules/next/dist/bin/next",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Next.js dev server",
+			"type": "shell",
+			"command": "/Users/kg/.nvm/versions/node/v22.14.0/bin/npm",
+			"args": [
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Next.js dev server",
+			"type": "shell",
+			"command": "/Users/kg/.nvm/versions/node/v22.14.0/bin/node",
+			"args": [
+				"/Users/kg/.nvm/versions/node/v22.14.0/lib/node_modules/npm/bin/npm-cli.js",
+				"run",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Next.js dev server",
+			"type": "shell",
+			"command": "/Users/kg/.nvm/versions/node/v22.14.0/bin/node",
+			"args": [
+				"${workspaceFolder}/node_modules/next/dist/bin/next",
+				"dev"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}

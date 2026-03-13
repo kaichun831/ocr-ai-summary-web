@@ -1,0 +1,15 @@
+- [x] Verify that the copilot-instructions.md file in the .github directory is created.
+- [x] Clarify Project Requirements
+- [x] Scaffold the Project
+- [x] Customize the Project
+- [x] Install Required Extensions
+- [x] Compile the Project
+- [x] Create and Run Task
+- [ ] Launch the Project
+- [x] Ensure Documentation is Complete
+
+- Built with Next.js, TypeScript, App Router, and Tailwind CSS.
+- Added image upload UI, OCR API route, and Copilot-compatible summarization route.
+- Uses environment variables for OCR and summarization credentials.
+- No extra VS Code extensions were required for this project.
+- README documents setup, environment variables, and current limitations.
