@@ -14,6 +14,14 @@ type ChatCompletionResponse = {
   }>;
 };
 
+function createFallbackResponse(text: string, reason: string) {
+  return {
+    provider: "Local fallback",
+    summary: createFallbackSummary(text),
+    fallbackReason: reason,
+  };
+}
+
 function normalizeMarkdownSummary(summary: string) {
   const trimmed = summary.trim();
 
@@ -80,52 +88,58 @@ export async function POST(request: Request) {
   );
 
   if (!apiKey) {
-    return NextResponse.json({
-      provider: "Local fallback",
-      summary: createFallbackSummary(text),
-    });
+    return NextResponse.json(
+      createFallbackResponse(text, "未設定 GitHub Models token。"),
+    );
   }
 
-  const response = await fetch(apiUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0.2,
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-    }),
-    cache: "no-store",
-  });
+  let response: Response;
+
+  try {
+    response = await fetch(apiUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0.2,
+        messages: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+      }),
+      cache: "no-store",
+    });
+  } catch {
+    return NextResponse.json(
+      createFallbackResponse(text, "無法連線到 GitHub Models API。"),
+    );
+  }
 
   if (!response.ok) {
-    const fallbackSummary = createFallbackSummary(text);
+    const responseText = await response.text();
+    const reason = response.status === 401 || response.status === 403
+      ? `GitHub Models API 拒絕存取（HTTP ${response.status}）。請確認 token 權限含 models:read，且帳號可使用 GitHub Models。`
+      : `GitHub Models API 呼叫失敗（HTTP ${response.status}）。${responseText.trim() || ""}`.trim();
 
-    return NextResponse.json({
-      provider: "Local fallback",
-      summary: fallbackSummary,
-    });
+    return NextResponse.json(createFallbackResponse(text, reason));
   }
 
   const result = (await response.json()) as ChatCompletionResponse;
   const summary = result.choices?.[0]?.message?.content?.trim();
 
   if (!summary) {
-    return NextResponse.json({
-      provider: "Local fallback",
-      summary: createFallbackSummary(text),
-    });
+    return NextResponse.json(
+      createFallbackResponse(text, "GitHub Models API 沒有回傳可用的摘要內容。"),
+    );
   }
 
   return NextResponse.json({

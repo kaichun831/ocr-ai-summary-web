@@ -7,6 +7,7 @@ import {
   buildSummaryDocument,
   createReportFilename,
   createSummaryFilename,
+  getSummaryProviderDetails,
   SUMMARY_STORAGE_KEY,
 } from "@/lib/summary-document";
 import {
@@ -45,6 +46,7 @@ type OcrResponse = {
 type SummaryResponse = {
   provider?: string;
   summary?: string;
+  fallbackReason?: string;
   error?: string;
 };
 
@@ -201,6 +203,7 @@ export default function Home() {
   const [errorMessage, setErrorMessage] = useState("");
   const [ocrProvider, setOcrProvider] = useState("");
   const [summaryProvider, setSummaryProvider] = useState("");
+  const [summaryFallbackReason, setSummaryFallbackReason] = useState("");
   const [queueProgress, setQueueProgress] = useState("尚未開始");
   const previewUrlsRef = useRef<string[]>([]);
   const [summaryConfig, setSummaryConfig] = useState<SummaryConfig>(() => {
@@ -250,6 +253,10 @@ export default function Home() {
     () => uploadItems.map((item) => item.name),
     [uploadItems],
   );
+  const summaryProviderDetails = useMemo(
+    () => getSummaryProviderDetails(summaryProvider, summaryFallbackReason),
+    [summaryFallbackReason, summaryProvider],
+  );
 
   useEffect(() => {
     previewUrlsRef.current = uploadItems.map((item) => item.previewUrl);
@@ -290,6 +297,7 @@ export default function Home() {
     setQueueProgress("尚未開始");
     setSummary("");
     setSummaryProvider("");
+    setSummaryFallbackReason("");
     setOcrText("");
     setOcrProvider("");
 
@@ -352,11 +360,13 @@ export default function Home() {
     setSummary(data.summary);
     const provider = data.provider || "GitHub Models";
     setSummaryProvider(provider);
+    setSummaryFallbackReason(data.fallbackReason || "");
 
     const summaryDocument = buildSummaryDocument({
       summaryMarkdown: data.summary,
       ocrText: text,
       provider,
+      fallbackReason: data.fallbackReason,
       sourceFiles: sourceFileNames,
       summaryConfig,
     });
@@ -369,6 +379,7 @@ export default function Home() {
       summaryMarkdown,
       ocrText,
       provider,
+      fallbackReason: summaryFallbackReason,
       sourceFiles: sourceFileNames,
       summaryConfig,
     });
@@ -429,6 +440,7 @@ export default function Home() {
     setErrorMessage("");
     setSummary("");
     setSummaryProvider("");
+    setSummaryFallbackReason("");
     setQueueProgress(`準備處理 ${uploadItems.length} 張圖片`);
 
     const aggregatedTexts: string[] = [];
@@ -609,9 +621,9 @@ export default function Home() {
                   ? "待命中"
                   : status === "compressing"
                     ? "壓縮中"
-                  : status === "uploading"
-                    ? "辨識中"
-                    : "彙總中"}
+                    : status === "uploading"
+                      ? "辨識中"
+                      : "彙總中"}
               </span>
             </div>
 
@@ -818,13 +830,28 @@ export default function Home() {
                   目前模型：{summaryConfig.model || "未設定"}
                 </p>
               </div>
-              <span className="rounded-full bg-white/80 px-3 py-1 text-xs text-slate-600 ring-1 ring-amber-900/10">
-                {summaryProvider || "等待摘要"}
-              </span>
+              <div className="flex flex-col items-end gap-2 text-right">
+                <span
+                  className={`rounded-full px-3 py-1 text-xs ring-1 ${summaryProviderDetails.isFallback ? "bg-amber-100 text-amber-800 ring-amber-200" : "bg-white/80 text-slate-600 ring-amber-900/10"}`}
+                >
+                  {summaryProvider ? summaryProviderDetails.badgeLabel : "等待摘要"}
+                </span>
+                {summaryProvider ? (
+                  <span className="text-xs font-medium text-slate-600">
+                    {summaryProviderDetails.modeLabel}
+                  </span>
+                ) : null}
+              </div>
             </div>
             <div className="mt-5 min-h-[360px] rounded-[1.5rem] bg-white/75 px-5 py-4 text-base leading-8 text-slate-800 ring-1 ring-amber-900/10">
               {summary ? (
                 <div className="space-y-4">
+                  <div
+                    className={`rounded-3xl border px-4 py-3 text-sm ${summaryProviderDetails.isFallback ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}
+                  >
+                    <p className="font-semibold">{summaryProviderDetails.modeLabel}</p>
+                    <p className="mt-1">{summaryProviderDetails.description}</p>
+                  </div>
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <button
                       className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"

@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import {
   buildReportMarkdown,
+  getSummaryProviderDetails,
   parseStoredSummaryDocument,
   SUMMARY_STORAGE_KEY,
 } from "@/lib/summary-document";
@@ -21,6 +22,10 @@ export default function SummaryPreviewPage() {
 
   const summaryMarkdown = document?.summaryMarkdown || "";
   const reportMarkdown = document ? buildReportMarkdown(document) : "";
+  const providerDetails = getSummaryProviderDetails(
+    document?.provider || "",
+    document?.fallbackReason,
+  );
 
   function renderContent() {
     if (!document) {
@@ -71,6 +76,14 @@ export default function SummaryPreviewPage() {
           <p className="mt-3 text-slate-600">
             這裡可切換 Markdown 排版預覽、原始 .md 文字，以及包含 OCR 原文的完整報告內容。
           </p>
+          {document ? (
+            <div
+              className={`mt-4 rounded-3xl border px-4 py-3 text-sm ${providerDetails.isFallback ? "border-amber-200 bg-amber-50 text-amber-900" : "border-emerald-200 bg-emerald-50 text-emerald-900"}`}
+            >
+              <p className="font-semibold">{providerDetails.modeLabel}</p>
+              <p className="mt-1">{providerDetails.description}</p>
+            </div>
+          ) : null}
         </header>
 
         <section className="rounded-4xl border border-slate-200 bg-white/80 p-6 shadow-[0_18px_60px_rgba(15,23,42,0.08)]">
